@@ -60,12 +60,29 @@
               <img class="img-fluid d-block mx-auto" width="500" height="700" src="./img/topviewdrone.jpg" alt="drone top view">
               <img class="img-fluid d-block mx-auto" width="500" height="700" src="./img/pitchrollyaw.jpg" alt="pitchrollyaw">
               <h6> Figure BM1: To the left can be seen an example of the euler angle scheme for a plane. To the right can be seen a top down view of our quadcopter with the arms labeled as mentioned</h6>
+              <p> We will assume a top down view of the quadcopter, with the front end above the bottom. We will then number the arms clockwise starting from the top right as motor 1,2,3,4. These worked as follows: 
+              </p> <br>
+              &emsp; - If pitch was above desired, lower pwm on 1,4 and raise 2,3 <br>
+              &emsp; - If pitch was below desired, lower pwm on 2,3 and raise 1,4 <br>
+              &emsp; - If roll was above desired, lower pwm on 3,4 and raise 1,2 <br>
+              &emsp; - If roll was below desired, lower pwm on 1,2 and raise 3,4 <br>
+              &emsp; - If yaw was above desired, lower pwm on  2,4 and raise 1,3 <br>
+              &emsp; - If yaw was below desired, lower pwm on 1,3 and raise 2,4 <br>
+              &emsp; - Height is handled through the same operation for all motors. <br>
+              <p> As can be noted, there exist 4 degrees of freedom for the drone. This requires 4 PID loops to stabilize.
+              </p>
+              <p> Next, we had to select an initial reference frame for the drone. The drawing presented above is technically only the ‘body’ frame, and an initial reference frame is required in order to determine rotation. To simplify things, we decided on the following, upon startup the measurement device would be kept parallel to the earth and 0 pitch, 0 roll, and 180 yaw would be set as the initial angles. For the entirety of the lab, the desired angle was set as the initial reference frame angles. This was because the initial goal of the lab was for the drone to hover while maintaining angular stability. Theoretically however lateral movement could be accomplished by setting desired angles off 0. For instance moving forward could be accomplished by setting the desired pitch slightly negative so that the vertical thrust would hove a component moving forward. Meanwhile a PID loop on the height would keep the drone from falling.
+              </p>
               <h3> Logical Structure </h3>
               <p> 
               </p> 
               <h3> Origin of Idea </h3>
               <h4> Remote Transmitter Smartphone </h4>
+              <p> This is the controller phone that will be in the hands of the user. It simply consists of the App that will be used to communicate with the drone, through bluetooth (other possible media Wi-Fi, Cellular etc).
+              </p>
               <h4> Smartphone + Drone </h4>
+              <p> This duo is the main building blocks of the drone system. The smartphone here becomes the master here. It uses the wireless communication to listen to the commands given by Transmitter-App. Then it has the Mobile App that is responsible to comprehend the commands and to potentially leverage the hardware present on the mobile (Accelerometer, GPS etc.) and pass the sensor values to the microcontroller. It communicates with the Microcontroller through its micro USB port which turns into UART through TTL converter.
+              </p>
               
 
               <h3> Acoustic Team </h3>
