@@ -74,8 +74,7 @@
               <p> Next, we had to select an initial reference frame for the drone. The drawing presented above is technically only the ‘body’ frame, and an initial reference frame is required in order to determine rotation. To simplify things, we decided on the following, upon startup the measurement device would be kept parallel to the earth and 0 pitch, 0 roll, and 180 yaw would be set as the initial angles. For the entirety of the lab, the desired angle was set as the initial reference frame angles. This was because the initial goal of the lab was for the drone to hover while maintaining angular stability. Theoretically however lateral movement could be accomplished by setting desired angles off 0. For instance moving forward could be accomplished by setting the desired pitch slightly negative so that the vertical thrust would hove a component moving forward. Meanwhile a PID loop on the height would keep the drone from falling.
               </p>
               <h3> Logical Structure </h3>
-              <p> 
-              </p> 
+              <img class="img-fluid d-block mx-auto" width="500" height="700" src="./img/logicalstructure.jpg" alt="logicalstructure">
               <h4> Remote Transmitter Smartphone </h4>
               <p> This is the controller phone that will be in the hands of the user. It simply consists of the App that will be used to communicate with the drone, through bluetooth (other possible media Wi-Fi, Cellular etc).
               </p>
@@ -83,6 +82,49 @@
               <p> This duo is the main building blocks of the drone system. The smartphone here becomes the master here. It uses the wireless communication to listen to the commands given by Transmitter-App. Then it has the Mobile App that is responsible to comprehend the commands and to potentially leverage the hardware present on the mobile (Accelerometer, GPS etc.) and pass the sensor values to the microcontroller. It communicates with the Microcontroller through its micro USB port which turns into UART through TTL converter.
               </p>
               
+              <h2> Initial Research </h2>
+              <h3> Finding the max baud rate over UART </h3>
+              <p> The biggest unknown of using a phone as a big sensor, is the latency factor. So it was very important to find out the latency of communication between PIC32 and a typical Android Phone through UART. As per the PIC32's datasheet, max baud rate that can be achieved at 40MHz is 2500000 bits/sec. But in reality this number reduces to 230400 bits per second because the on-board oscillator has very low tolerance in terms of error. By going above 230400, the error in a bit-duration increases to more than 10%, and hence the protocol starts losing data. One way to solve this problem was to install a high tolerance external oscillator. But it was not a trivial task, so we discarded that as a possibility. Hence, we took 230400 bits/sec as our max acceptable baud rate. Needless to mention, an android phone was more than capable to work with this baud rate.
+              </p>
+              <h3> Finding the latency caused by an Android OS during UART transmission </h3>
+              <p> After finding the right baud rate, next step was to find the latency that can occur during a UART transmission; reason being the non-real time nature of android OS that can preempt a UART transmission if need be. To figure this out we tried sending a byte of random data, in an infinite while loop, over UART and observed the Tx line on oscilloscope. As shown in the figure below, the 2 vertical lines show the start of 2 adjacent byte packets. 
+              </p>
+              <img class="img-fluid d-block mx-auto" width="375" height="350" src="./img/UARTlatency.jpg.jpg" alt="UART latency.jpg">
+              <p> As our baud rate is 230400, duration between 2 byte-packets should be (1/230400) 43.34 microseconds.  It can be clearly seen in the image that delta T is 43.60 microseconds, which is quite close to real time. Hence, it can be concluded that although an android OS is non-real time but it is smart enough to dedicate a complete processor to an infinite while. It will be safe to say that if we can somehow set the priority of our android app to high then UART transmission will become close to real time.
+              </p>
+              <h3> Finding the refresh rate of phone’s sensor values </h3>
+              <p> As per our protocol (in a section somewhere below called UART Data Encoding Schema), we needed to send 17 bytes of data from phone to PIC.
+              </p>
+              <p> 17 bytes = 1 byte of control word + 12 bytes of orientation values X,Y,Z + 4 bytes of height value calculated from barometer. 
+              </p>
+              <p> Given we are using a 10 bit UART (2 bits for delimiters and 8 bits payload), for every byte in 17 bytes, we need 2 extra bits. Hence total payload size becomes 170 bits.
+              </p>
+              <p> Ideal frequency of sensor values from phone to PIC = 230400 / 170 = 1355 Hz.
+              </p>
+              <p> But we noticed that we couldn't achieve this speed. Something was causing a reduction in the refresh rate. After much debugging, we found out that sensor values on the phone can be read at a maximum rate of 50Hz. This was a major factor that defined our refresh rate. Hence, we became limited to 50Hz to tune our PID.
+              </p>
+              <h3> Full blast - Buffer Overrun Error </h3>
+              <p> After achieving a refresh rate, our next step was to test a full blast of sensor values. In other words, we wanted to test if the PIC32 can cope up with the phone's ability to send data quickly. If we allowed the phone to send data in an infinite loop, then it caused the UART to break on PIC32 end. It was caused due an error called BUFFER OVERRUN, which occurs when UART cannot read its buffer as fast as the incoming data. So, the phone was sending data at such a high speed that the PIC could not keep up with it.
+              </p>
+              <p> To solve this issue, we created a request-response mechanism wherein the phone only sends data once PIC requests it. And every request was only made once all the previously received data was consumed. This potentially was a slow approach but since we were already bound to 50Hz. So, a request-response system didn't harm much.
+              </p>
+              <h3> IMU Work </h3>
+              <p> We wrote a high level library with which we could easily read sensor values from a GY-91 MPU over SPI as quickly as possible within PIC32. We decided to use it only if our phone concept would have failed. Unfortunately, this meant that about 1.5 weeks of tedious coding trying to figure out how to get this poorly documented and awfully laid out MPU-9250 chip to work over SPI was all for nothing. Fortunately, this meant that we never had to deal with this chip again. A quick tangent on the MPU-9250. It consists of a die containing gyroscopes and accelerometers and another die from a different company containing a magnetometer. The thing is advertised as SPI capable, but, when using SPI, the magnetometer can only be accessed as an I2C slave of the first die. The whole thing is poorly, and in some places incorrectly, documented. Whoever cobbled this thing together and advertised it as SPI capable should be fired.
+              </p>
+              <h2> Program/hardware Design </h2>
+              <h3> Program Details </h3>
+              <p> The code for this project consists of a sequence of setup code, followed by a single loop which reads sensor data and then performs PID feedback continuously. The setup code initializes timer2 and sets up OC1-4 to generate PWM signals. It then initializes Protothreads and starts scheduling our only thread. Our main thread initially runs the throttle programming sequence (full throttle 5 seconds, minimum throttle 5 seconds) to set the maximum and minimum throttle of the ESCs and then starts continuously running the sensing and PID loops. The sensing and PID loop consists of requesting data from the phone, interpreting response data based on a control byte in the response, and then running PID feedback loops when it receives sensor data. The response had the potential to be either sensor readings, a kill toggle command, a nop, or the PID parameters for a PID loop. If sensor readings are received, the global variables tracking each value are updated with their new values and then the PID feedback loops are run and the motor PWM signals updated. If the kill toggle is received, the value of the global variable “kill” is toggled, all motors are stopped, and all values used in the PID loops are reset. When kill is set to true, all motors are turned off. If the nop control is received, nothing is done. If any other control byte is received, it is assumed to be PID parameters for the loop numbered with that byte.
+              </p>
+              <h3> UART Data Encoding Scheme </h3>
+              <p> In order to prevent the PIC from falling behind sensor data readings from the phone and prevent the UART buffer on the PIC from overflowing, we decided to have the PIC “request” data from the phone by sending a byte and then waiting for the data response from the phone. We established a general scheme of instruction and data encoding for the response from the phone. This data is sent in a 17 byte string, consisting of 4 IEEE 754 format 32 bit floating point numbers sent bytewise, followed by a single “control” byte indicating what data had just been sent and how it should be interpreted. The PIC first converts the received bytes back into floats using a union data structure and then performs actions with the received data, depending in the value of the final control byte. We established control bytes for sensor readings, a kill command, a “nop”, and interpreted any other control byte as indicating PID parameters for the loop of the same number as the byte. The values for the control bytes of sensor, kill, and nop were, with the simple restriction that they be greater than the number of PID loops, chosen arbitrarily as “magic numbers” of 69, 101, and 42, respectively. Data was organized in the following order for each control byte. For sensor data, the four floats indicated X angle, Y angle, Z angle, and altitude, in that order. For kill and nop, the four floats were not used and were simply always zeros. For PID parameter updates, the four floats indicated Kp, Ki, and Kd, with the last being unused. 
+              </p>
+              <h3> PID loops </h3>
+              <p> 
+              </p>
+              <h3> Hardware Details: Circuitry </h3>
+              <p> The circuitry for this project was, all things considered, incredibly simple. We used a small board to house the PIC simply out of convenience and used an additional 2 inch solder board to break out the GPIO pins for the UART and 4 PWM connections. There was no fancy electrical witchcraft or arcane circuit wizardry, simply IO connections for interfaced devices.  Battery and Power (and Physical Kill Switch). We powered the whole aircraft with a 3S LiPo with a 2200 mAh rating. The positive output of the battery was wired through a large, hulking, physical kill switch just so that we could quickly and easily shut this death machine down when it went out of control. The battery output was then split with a poorly soldered and impromptu splitter to provide power to all 4 ESCs. Each ESC has a 5V output, so we were able to get two birds stoned at once by connecting the 5V output from one ESC to the input of the small board and power the whole thing with just the one battery.
+              </p>
+              <h3> Hardware Details: Circuitry </h3>
 
               <h3> Acoustic Team </h3>
               <p> Priya and Vini worked on the acoustic functionalities. <br>
