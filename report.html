@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>ECE 3400 Team 26</title>
+    <title>3-DOF Self-stabilizing Quadcopter Frame or: How We Learned To Stop Trying and Not Build the Drone</title>
 
     <!-- Bootstrap core CSS -->
     <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -27,14 +27,6 @@
 
   <body id="page-top">
 
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
-      <div class="container">
-        <a class="navbar-brand js-scroll-trigger" href="index.html">Home</a>
-
-      </div>
-    </nav>
-
     <!-- Header -->
      <div class="pagehead">
       <div class="container">
@@ -47,12 +39,11 @@
           <div class="col-lg-8 mx-auto">
             <div class="lab-page">
               <!-- Project Details Go Here -->
-              <h2 class="text-uppercase text-left">Lab 2: Analog Circuitry and FFTs</h2>
-              <p class="item-intro text-muted"> In this lab, we added sensors to the robot. <br>
-              One is a microphone circuit that will detect a 660Hz whistle blow signifying the beginning of the maze mapping. The other will capture inputs from an IR sensor to detect nearby robots emitting IR at 6.08kHz, and distinguish them from decoys emitting at 18kHz.</p>
+              <h2 class="text-uppercase text-left">3-DOF Self-stabilizing Quadcopter Frame or: How We Learned To Stop Trying and Not Build the Drone</h2>
+              <p class="item-intro text-muted"> Labhansh Aritwal la375 <br> Adrian Dohmann ahd59 <br> Kenneth Huaman kch95 <br> Vini Tripathii ut33</p>
 
-              <h3> Open Music Labs FFT Library </h3>
-              <p> Data was collected from the ADC (for the optics team) or from analogRead (for the acoustics team) and transformed via the FFT library. The Arduino FFT library allows users to quickly transform signal data gathered over a period of time from the Arduino into its various frequency.
+              <h3> INTRODUCTION </h3>
+              <p> We created a 3 rotational degree of freedom quadcopter frame. The result was so that when placed on the small surface area of roughly a finger tip, the quadcopter can maintain its stability and recover from perturbations. The four motors increase and decrease in speed according the size and direction of the disturbance so as to minimize the oscillations of the quadcopter frame. The original goal of this project was to create a drone that could hover, but due to safety constraints, we were unable to obtain the necessary control values for the height (the Z-axis) and pivoted to a quadcopter that could self-stabilize in pitch and roll. The main components of this project are the microcontroller (PIC32), ESC’s (electronic speed controllers), motors and two Android phones. One Android sensor acted as a Bluetooth remote and was mainly relevant during the tuning process, the second phone acted as a receiver and sensor. We used the Android sensor, compass orientation, to detect absolute angle orientation with respect to pitch, roll and yaw. (The compass orientation sensor is a software sensor that combines information from the geomagnetic field and accelerometer hardware sensor in the phone to computer the phone’s angle orientation.) The control algorithm used in this project was PID.
               </p>
 
               <h3> Acoustic Team </h3>
