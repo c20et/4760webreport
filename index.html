@@ -15,13 +15,15 @@
 
     <!-- Custom fonts for this template -->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,550,700" rel="stylesheet" type="text/css">
     <link href='https://fonts.googleapis.com/css?family=Kaushan+Script' rel='stylesheet' type='text/css'>
     <link href='https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
     <link href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700' rel='stylesheet' type='text/css'>
 
     <!-- Custom styles for this template -->
     <link href="css/agency.css" rel="stylesheet">
+    
+
 
   </head>
 
@@ -29,9 +31,9 @@
 
     <!-- Header -->
      <div class="pagehead">
-      <div class="container">
+      <!-- <div class="container"> -->
         <h1>3-DOF Self-stabilizing Quadcopter Frame or: How We Learned To Stop Trying and Not Build the Drone </h1>
-      </div>
+       <!--</div> -->
     </div>
 
     <div class="container">
@@ -42,10 +44,11 @@
               <h2 class="text-uppercase text-left"></h2>
               <p class="item-intro text-muted"> Labhansh Aritwal la375 <br> Adrian Dohmann ahd59 <br> Kenneth Huaman kch95 <br> Vini Tripathii ut33</p>
 
-              <h2> INTRODUCTION </h2>
+              <h2> Introduction </h2>
               <p> We created a 3 rotational degree of freedom quadcopter frame. The result was so that when placed on the small surface area of roughly a finger tip, the quadcopter can maintain its stability and recover from perturbations. The four motors increase and decrease in speed according the size and direction of the disturbance so as to minimize the oscillations of the quadcopter frame. The original goal of this project was to create a drone that could hover, but due to safety constraints, we were unable to obtain the necessary control values for the height (the Z-axis) and pivoted to a quadcopter that could self-stabilize in pitch and roll. The main components of this project are the microcontroller (PIC32), ESC’s (electronic speed controllers), motors and two Android phones. One Android sensor acted as a Bluetooth remote and was mainly relevant during the tuning process, the second phone acted as a receiver and sensor. We used the Android sensor, compass orientation, to detect absolute angle orientation with respect to pitch, roll and yaw. (The compass orientation sensor is a software sensor that combines information from the geomagnetic field and accelerometer hardware sensor in the phone to computer the phone’s angle orientation.) The control algorithm used in this project was PID.
               </p>
-              
+              <br>
+              <br>
               <h2> High Level Design </h2>
               <h3> Origin of Idea </h3>
               <p> It was something that Labhansh came up and we were really thrilled to hear the whole concept. It felt different and unique, and we didn’t know if it would work but we still wanted to do it because it was a fun experiment.
@@ -81,7 +84,8 @@
               <h4> Smartphone + Drone </h4>
               <p> This duo is the main building blocks of the drone system. The smartphone here becomes the master here. It uses the wireless communication to listen to the commands given by Transmitter-App. Then it has the Mobile App that is responsible to comprehend the commands and to potentially leverage the hardware present on the mobile (Accelerometer, GPS etc.) and pass the sensor values to the microcontroller. It communicates with the Microcontroller through its micro USB port which turns into UART through TTL converter.
               </p>
-              
+              <br>
+              <br>
               <h2> Initial Research </h2>
               <h3> Finding the max baud rate over UART </h3>
               <p> The biggest unknown of using a phone as a big sensor, is the latency factor. So it was very important to find out the latency of communication between PIC32 and a typical Android Phone through UART. As per the PIC32's datasheet, max baud rate that can be achieved at 40MHz is 2500000 bits/sec. But in reality this number reduces to 230400 bits per second because the on-board oscillator has very low tolerance in terms of error. By going above 230400, the error in a bit-duration increases to more than 10%, and hence the protocol starts losing data. One way to solve this problem was to install a high tolerance external oscillator. But it was not a trivial task, so we discarded that as a possibility. Hence, we took 230400 bits/sec as our max acceptable baud rate. Needless to mention, an android phone was more than capable to work with this baud rate.
@@ -89,7 +93,7 @@
               <h3> Finding the latency caused by an Android OS during UART transmission </h3>
               <p> After finding the right baud rate, next step was to find the latency that can occur during a UART transmission; reason being the non-real time nature of android OS that can preempt a UART transmission if need be. To figure this out we tried sending a byte of random data, in an infinite while loop, over UART and observed the Tx line on oscilloscope. As shown in the figure below, the 2 vertical lines show the start of 2 adjacent byte packets. 
               </p>
-              <img class="img-fluid d-block mx-auto" width="375" height="350" src="./img/UARTlatency.jpg.jpg" alt="UART latency.jpg">
+              <img class="img-fluid d-block mx-auto" width="375" height="350" src="./img/UARTlatency.jpg" alt="UART latency">
               <p> As our baud rate is 230400, duration between 2 byte-packets should be (1/230400) 43.34 microseconds.  It can be clearly seen in the image that delta T is 43.60 microseconds, which is quite close to real time. Hence, it can be concluded that although an android OS is non-real time but it is smart enough to dedicate a complete processor to an infinite while. It will be safe to say that if we can somehow set the priority of our android app to high then UART transmission will become close to real time.
               </p>
               <h3> Finding the refresh rate of phone’s sensor values </h3>
@@ -119,13 +123,86 @@
               <p> In order to prevent the PIC from falling behind sensor data readings from the phone and prevent the UART buffer on the PIC from overflowing, we decided to have the PIC “request” data from the phone by sending a byte and then waiting for the data response from the phone. We established a general scheme of instruction and data encoding for the response from the phone. This data is sent in a 17 byte string, consisting of 4 IEEE 754 format 32 bit floating point numbers sent bytewise, followed by a single “control” byte indicating what data had just been sent and how it should be interpreted. The PIC first converts the received bytes back into floats using a union data structure and then performs actions with the received data, depending in the value of the final control byte. We established control bytes for sensor readings, a kill command, a “nop”, and interpreted any other control byte as indicating PID parameters for the loop of the same number as the byte. The values for the control bytes of sensor, kill, and nop were, with the simple restriction that they be greater than the number of PID loops, chosen arbitrarily as “magic numbers” of 69, 101, and 42, respectively. Data was organized in the following order for each control byte. For sensor data, the four floats indicated X angle, Y angle, Z angle, and altitude, in that order. For kill and nop, the four floats were not used and were simply always zeros. For PID parameter updates, the four floats indicated Kp, Ki, and Kd, with the last being unused. 
               </p>
               <h3> PID loops </h3>
-              <p> 
+              <p> In order to both make our code scalable to easily add new loops and avoid the need to manually type out the parameters for each individual PID loop, we chose to simply initialize each parameter as an array, with each loop using the values at its specific index into each parameter array. We additionally implemented the PID loop as a function call, which takes in the loop number as its only input. Because of this, we can add and remove loops simply by changing the defined number of loops and run each loop with no additional code or effort. This also conveniently gave us a simple way to indicate which loop each set of PID parameters is for when received over UART. It is worth mentioning that our PID loops had to measure and take into account the time that has elapsed since the previous sensor readings when calculating the differential and integral terms since the loops are not necessarily being run at an exact rate. Time was tracked using Protothreads’ approximate millisecond timing, which is accurate enough for loops being run approximately once every 15-20 ms. After all PID loops are updated, the new PWM values for each motor are calculated as a linear sum of the outputs of each relevant loop, depending on how the motor feeds back to each loop. In our implementation, we numbered the loops for pitch, roll, yaw, and height in order from 0 to 3.
               </p>
-              <h3> Hardware Details: Circuitry </h3>
-              <p> The circuitry for this project was, all things considered, incredibly simple. We used a small board to house the PIC simply out of convenience and used an additional 2 inch solder board to break out the GPIO pins for the UART and 4 PWM connections. There was no fancy electrical witchcraft or arcane circuit wizardry, simply IO connections for interfaced devices.  Battery and Power (and Physical Kill Switch). We powered the whole aircraft with a 3S LiPo with a 2200 mAh rating. The positive output of the battery was wired through a large, hulking, physical kill switch just so that we could quickly and easily shut this death machine down when it went out of control. The battery output was then split with a poorly soldered and impromptu splitter to provide power to all 4 ESCs. Each ESC has a 5V output, so we were able to get two birds stoned at once by connecting the 5V output from one ESC to the input of the small board and power the whole thing with just the one battery.
+              <h3> Hardware Details</h3>
+              <h4> Circuitry </h4>
+              <img class="img-fluid d-block mx-auto" width="375" height="656.25" src="./img/phoneondrone.jpg" alt="phone on drone">
+              <p> The circuitry for this project was, all things considered, incredibly simple. We used a small board to house the PIC simply out of convenience and used an additional 2 inch solder board to break out the GPIO pins for the UART and 4 PWM connections. There was no fancy electrical witchcraft or arcane circuit wizardry, simply IO connections for interfaced devices.
               </p>
-              <h3> Hardware Details: Circuitry </h3>
-
+              <h4> Battery and Power (and Physical Kill Switch) </h4>
+              <p> We powered the whole aircraft with a 3S LiPo with a 2200 mAh rating. The positive output of the battery was wired through a large, hulking, physical kill switch just so that we could quickly and easily shut this death machine down when it went out of control. The battery output was then split with a poorly soldered and impromptu splitter to provide power to all 4 ESCs. Each ESC has a 5V output, so we were able to get two birds stoned at once by connecting the 5V output from one ESC to the input of the small board and power the whole thing with just the one battery.
+              </p>
+              <h4> ESCs and Motors </h4>
+              <p> Four ESCs were used to drive the four brushless DC motors which made up the “copter” portion of our failed quadcopter. These ESCs are driven by 400Hz PWM pulses ranging in on duration from 1ms (for zero throttle) to 2ms (for full throttle). We used pins RB9, RB11, RB15, and RB13 as the PWM outputs to control motors 1-4, respectively. Each ESC has a 3 wire header which contains a 5V ouput, ground, and a PWM input. We chose to use the 5V output from the ESC connected to motor 2 to power the PIC, by connecting this to Vin (which connects to the onboard 5V to 3.3V voltage regulator) on the small board. 
+              </p>
+              <h4> TTL to UART Converter </h4>
+              <p> We connected the PIC to the phone using a TTL to UART converter. Pins RA1 and RB10 on the PIC were used as RX and TX, respectively, and were connected, along with a common ground, to the appropriate pins (RX to TX and vise versa) on the TTL converter.The TTL converter was then plugged into the phone.
+              </p>
+              <h4> Mechanical Hardware </h4>
+              <p> We used an existing quadcopter frame, motors, and propellers that Labhansh had purchased previously for a personal project that never reached fruition. We purchased a new set of matching ESCs to drive the motors and some propeller guards to protect us from the motors. Everything went together as it should. We placed the ESCs on the underside of each arm and set firmly in place with masking tape, for lack of a better attachment method. We attached to phone to the frame by hot gluing some foam padding to the top of the frame and tightening a velcro band around the phone to hold it firmly in place.
+              </p>
+              <h4> Blade Guards </h4>
+              <p> Upon preliminary testing of the motor along with recommendation from Professor Land, it was determined that propellers of this size are dangerous when in motion. To mitigate this danger, propeller guards were originally designed in AutoCAD Inventor to be used on the drone. The first version proved to be too big to be made on any of the 3D printers available to us. The second scaled down version only covered the extruding 75 degree angles at the end of any of the arms. This fit in a 3D printer, but unfortunately it proved to be too complex a design to print directly.
+              </p>
+              <img class="img-fluid d-block mx-auto" width="375" height="350" src="./img/cadguard1.jpg" alt="CAD Guard">
+              <img class="img-fluid d-block mx-auto" width="375" height="350" src="./img/cadguard2.jpg" alt="CAD Guard">
+              <h6> Figure BG1: Designs in AutoCAD inventor for a propeller guard to be placed on our drone. Unfortunately we had to buy guards. </h6>
+              <p> An immediate fix seemed to be modularity. A guard would be printed out in much simpler pieces and then assembled later. Unfortunately we needed the guards immediately to further test the motors. To save time, we purchased propeller guards that would fit on a drone of similar dimensions to ours. Professor Land agreed that we could exclude them from the budget because he wanted us to be safe.
+              </p>
+              <h3> Bluetooth Sender and Receiver Apps</h3>
+              <p> As has been made abundantly clear by now, a critical portion of this project is communication between the phone to the PIC32 via UART. To handle things from the phone’s end, an app was written in android studio in Java so that the necessary information could be sent. As time went on it became evident that PID tuning is best done from UART as well, since during testing it would be hard to program the PIC32 while surrounded by rapidly spinning propellers. To accomplish this, a second app was written to communicate PID parameters and a wireless KILL command to the original app. The app on the phone that received data via bluetooth and transmitted it with sensor data to the PIC32 was referred to as the receiver and the app on the phone that sent these parameters was the sender.
+              </p>
+              <img class="img-fluid d-block mx-auto" width="275" height="375" src="./img/recieverphone.jpg" alt="Phone App">
+              <img class="img-fluid d-block mx-auto" width="275" height="375" src="./img/remotephone.jpg" alt="Phone App">
+              <h6> Figure: Sender App on the left and Receiver App on the right </h6>
+              <h4> Testing </h4>
+              <p> It was made apparent once the drone was assembled that safely testing and tuning the drone would be a challenge. The earlies design was a wooden structure of a previous year’s design that had free rotation along 1 degree of freedom on a crossbar. This could theoretically allow for testing of pitch and roll, but it proved to be too stiff and unresponsive. The next design involved a section of PVC piping held vertical with a large vice and topped of with a PVC tee. This was to again allow for individual testing of pitch and roll, but it also did not work since the large responses of the initial PID testing made the drone sway violently from side to side. This led to the third and working attempt. It consisted of two long section of two by four supported by two equal height tables. A metal pipe with a pvc pipe inserted partially over was then placed so that the boards would act as support, and was then securely fastened to the boards. The drone was then secured firmly to the pvc with zipties so as to ensure no friction. The design had the added benefit that the planks would restrict vertical motion of the drone. 
+              </p>              
+              <img class="img-fluid d-block mx-auto" width="200" height="375" src="./img/pitchrolltesting.jpg" alt="Rig 1">
+              <img class="img-fluid d-block mx-auto" width="200" height="375" src="./img/yawtesting.jpge.jpg" alt="Rig 2">
+              <img class="img-fluid d-block mx-auto" width="200" height="375" src="./img/heightesting.jpg" alt="Rig 3">
+              <h6> Figure: Three Testing Rigs, first for Roll and Pitch, second for Yaw, third for Height </h6>
+              <p> The next challenge was to restrict motion to yaw. This involved searching the lab for discarded projects, where we found a metal ring secured to a brushless motor, again secured to a wooden slab. This had excellent free rotation and worked instantly. The final rig would be to test height adjustments/flight. This would be once we had already achieved reasonable stability in the other three angles. We came up with a cardboard box with a rope running from the drone through the top of the box out a side and held by a team member. There was a vertical bar running through the center which made the rope from the top hole only pull with a vertical component. While this setup did work, it did limit the motion of the overall drone, and did not simulate a true flight. As mentioned before, an extra precaution was taken in the form of the hard-kill switch placed between the battery and the esc’s. This would forcibly kill power at the discretion of the user.
+              </p>
+              <p> As stated above, it proved difficult to test flight with the harness, as it impeded fully free motion of the drone. Free flight was ideal here, but we had to take safety precautions. We found 2 volunteers and tried the following setup. Four people held a tarp beneath the drone, initially not taught when the drone was on the floor during its initialization sequence. One person would record and hold the physical kill switch, free to kill at his discretion, and the last person would hold the sender phone. This last person would send values to the drone to initialize control loops in pitch roll and yaw, before warning the rest of team prior to starting the height control(which initializes flight). This member also has the wireless kill switch. When the drone took off, all members immediately raised the tarp, preparing to catch the drone in a worst case scenario.
+              </p>
+              <br>
+              <br>
+              <h2> Results </h2>
+              <h3> PID Tuning </h3>
+              <p> We began by setting the integral and derivative control values to zero, and increased the proportional control value until it would oscillate steadily despite disturbances. We then added a small value for the integral control to help it stabilize and then increased the derivative control value until oscillations stopped. We repeated this process for pitch, yaw, and roll until we felt satisfied with the performance of each.
+              </p>
+              <h3> Phone Performance </h3>
+              <p> The orientation sensors on the phone only updated at a rate of approximately 50Hz. We found that this was less than ideal for running our PID loops. There was a slight lag noticeable in the derivative term which would result in oscillations if set to high. We were able to make do and get it to function properly, but wish we could get faster readings. We would not say the phone is a non-viable sensor source, but it is certainly not ideal.
+              </p>
+              <h3> Safety </h3>
+              <p> During testing, we had two safety mechanisms. We firstly had a wireless kill switch which transmitted a kill signal over bluetooth. This experienced a slight delay, so we decided to add a physical killswitch to cut power to the whole drone. Of course, we usually wore safety goggles when directly testing the drone. With this, we were fairly confident that nothing seriously bad would happen.
+              </p>
+              <h3> The Setback and the Pivot </h3>
+              <p> After we had tuned PID for pitch, yaw, and roll, we were only left with tuning thrust to hover at a steady height. As mentioned above, we had no rigid testing rig for height tuning. While attempting to tune height, we experienced an accident. We had a small crash which resulted in a motor being destroyed and an ESC being slightly in flames. We happened to have exactly one spare motor and ESC on hand, but that is it. Needless to say, this put us off from any additional height testing, for fear that we would break an irreplaceable part and have nothing to show for the demo. To adjust from the setback, we did have to tune the PID parameters again. This however didn’t take too long. We made a hard pivot and decided to reduce the scope of our project from a full hovering drone to a frame which can self-correct in three rotational degrees of freedom. An additional gimmick was allowing the drone to balance on a finger and a small rod.
+              </p>
+              <h3> Final Product </h3>
+              <p> After pivoting, we have our final product.
+              </p>
+              <br>
+              <br>
+              <h2> Conclusion </h2>
+              <h3> Overview </h3>
+              <h3> Improvements </h3>
+              <h3> Intellectual Property Considerations </h3>
+              <h3> Ethical Considerations </h3>
+              <h3> Legal Considerations </h3>
+              <br>
+              <br>
+              <h2> APPENDIX </h2>
+              <h3> APPENDIX A: Inclusion of Project </h3>
+              <h3> APPENDIX B: Circuit Schematics </h3>
+              <h3> APPENDIX C: Budget </h3>
+              <h3> APPENDIX D: Work Distribution </h3>
+              <h3> APPENDIX E: References </h3>
+              <h3>APPENDIX F: Commented Code </h3>
+              
               <h3> Acoustic Team </h3>
               <p> Priya and Vini worked on the acoustic functionalities. <br>
               Assembling the microphone circuit. </p>
@@ -137,50 +214,357 @@
               &emsp; - LM358 Op Amp <br>
               &emsp; - Various wires <br>
 
-              <img class="img-fluid d-block mx-auto" width="250" height="70" src="./img/lab2/acoustic/microphone schematic initial.png" alt="">
-              <p> We first connected the microphone to the arduino using the diagram above as reference. We used a 3.24KΩ Resistor and a 1µF Capacitor. We connected the output to pin A1.<br>
-              In Arduino the ADC clock is preset to 16 MHz/128 = 125 KHz (though the sampling rate can be increased). Each conversion in AVR takes 13 ADC clocks so so the equivalent frequency is 125 KHz /13 = 9615 Hz. The ‘start’ is signaled by 660Hz, so analogRead is sufficient to fulfill the Nyquist Criteria which requires that the sampling frequency is at least twice the highest frequency component to avoid aliasing. The frequency of the human speech 85-180 Hz for males and 165-255 for females, and so should not interfere with sensing the start signal. <br>
-              We hooked up the function generator to the Input of the circuit to test which bin the 660Hz signal would fall in. <br>
-              We used the following code, modified from Team Alpha, to collect values: </p>
+
               <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">void setup() {
   Serial<span style="color: #333333">.</span>begin(<span style="color: #0000DD; font-weight: bold">115200</span>); <span style="color: #333333">//</span> use the serial port
 }
 
-void loop() {
-  <span style="color: #008800; font-weight: bold">while</span>(<span style="color: #0000DD; font-weight: bold">1</span>) {
-    cli();
-    <span style="color: #008800; font-weight: bold">for</span> (<span style="color: #007020">int</span> i <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span> ; i <span style="color: #333333">&lt;</span> <span style="color: #0000DD; font-weight: bold">512</span> ; i <span style="color: #333333">+=</span> <span style="color: #0000DD; font-weight: bold">2</span>) {
-      fft_input[i] <span style="color: #333333">=</span> analogRead(A1);
-      fft_input[i<span style="color: #333333">+</span><span style="color: #0000DD; font-weight: bold">1</span>] <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
-    }
-    fft_window();
-    fft_reorder();
-    fft_run();
-    fft_mag_log();
-    sei();
-    Serial<span style="color: #333333">.</span>println(<span style="background-color: #fff0f0">&quot;start&quot;</span>);
-    <span style="color: #008800; font-weight: bold">for</span> (byte i <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span> ; i <span style="color: #333333">&lt;</span> FFT_N<span style="color: #333333">/</span><span style="color: #0000DD; font-weight: bold">2</span> ; i<span style="color: #333333">++</span>) {
-      Serial<span style="color: #333333">.</span>println(fft_log_out[i]);
-    }
-  }
+#include "config_1_2_3.h"
+#include "pt_cornell_1_2_3.h"
+
+
+// === Accum macros ============================================================
+#define float2Accum(a) ((_Accum)(a))
+#define Accum2float(a) ((float)(a))
+#define int2Accum(a) ((_Accum)(a))
+#define Accum2int(a) ((int)(a))
+
+// === TIMER2 parameters =======================================================
+#define TIMER2_PS 32
+#define TIMER2_FREQ 400
+#define TIMER2_PERIOD (sys_clock / TIMER2_FREQ / TIMER2_PS)
+
+// === thread structures =======================================================
+static struct pt pt_serial, pt_input, pt_output;
+
+// === ESC control PWM specific stuff ==========================================
+/*
+ The throttle signal can range from 1ms to 2ms in duration.
+ pwm_baseline + pwm_minimum ===> 1ms
+ pwm_baseline + pwm_maximum ===> 2ms
+ */
+// minimum throttle value (to be added to all PWM values)
+const int pwm_baseline = sys_clock / 1000 / TIMER2_PS; // 1ms
+// minimum throttle control value
+const int pwm_minimum = 0; // 0ms
+// maximum throttle control value
+const int pwm_maximum = sys_clock / 1000 / TIMER2_PS; // 1ms
+
+// === Data transmitted over UART ==============================================
+/*
+ This is where variables and structures relating to UART communication and
+ data received over it will live.
+ */
+//union structs used to combine bytes received over UART
+union {
+    float f;
+    char b[4];
+} u[6];
+// control word
+char control_word;
+//control words for sensor data and kill
+#define sensorControlWord 69
+#define killControlWord 101
+#define nopControlWord 42
+// current angles
+volatile _Accum angX = 0;
+volatile _Accum angY = 0;
+volatile _Accum angZ = 0;
+volatile _Accum height = 0;
+// initial height
+volatile _Accum initialHeight = 0;
+// desired angle settings
+volatile _Accum desired_angX = int2Accum(180);
+volatile _Accum desired_angY = 0;
+volatile _Accum desired_angZ = 0;
+volatile _Accum desired_height = 0;
+// kill switch
+volatile char kill = 0;
+
+// static thrust value to get the wheels spinning
+volatile _Accum thrust = int2Accum(250);
+
+// === PID data ================================================================
+/*
+ We currently have three loops.
+ Each index into each array of parameters corresponds to a specific loop.
+ 0: pitch
+ 1: roll
+ 2: yaw
+ 3: height
+ */
+//number of PID loops to run
+#define NUM_LOOPS 4
+//current values
+volatile _Accum current_value[NUM_LOOPS];
+//desired values
+volatile _Accum desired_value[NUM_LOOPS];
+//current error values
+volatile _Accum current_error[NUM_LOOPS];
+//previous error values
+volatile _Accum previous_error[NUM_LOOPS];
+//proportional parameters
+volatile _Accum Kp[NUM_LOOPS] = {float2Accum(5.5), float2Accum(5.5), 2, 0};
+//derivative parameters
+volatile _Accum Kd[NUM_LOOPS] = {float2Accum(100.0), float2Accum(100.0), 0, 0};
+//integral parameters
+volatile _Accum Ki[NUM_LOOPS] = {float2Accum(0.05), float2Accum(0.05), 0, 0};
+//proportional control terms
+volatile _Accum p_cntl[NUM_LOOPS] = {0, 0, 0, 0};
+//differential control terms
+volatile _Accum d_cntl[NUM_LOOPS] = {0, 0, 0, 0};
+//integral control terms
+volatile _Accum i_cntl[NUM_LOOPS] = {0, 0, 0, 0};
+//total of control terms
+volatile _Accum V_cntl[NUM_LOOPS] = {0, 0, 0, 0};
+// time since last reading
+volatile _Accum dt;
+// time of last reading
+volatile _Accum last_time;
+
+// == Helper functions ================================================
+
+void setAllPWM(int pwm_value) {
+    SetDCOC1PWM(pwm_baseline + pwm_value);
+    SetDCOC2PWM(pwm_baseline + pwm_value);
+    SetDCOC3PWM(pwm_baseline + pwm_value);
+    SetDCOC4PWM(pwm_baseline + pwm_value);
 }
+
+// === PID loop and functions =========================================
+
+void PID_loop(int ind) {
+    // update error and previous error of loop
+    previous_error[ind] = current_error[ind];
+    current_error[ind] = current_value[ind] - desired_value[ind];
+
+    // update control values
+    p_cntl[ind] = Kp[ind] * current_error[ind];
+    d_cntl[ind] = Kd[ind] * ((current_error[ind] - previous_error[ind]) / dt);
+    i_cntl[ind] += Ki[ind] * (current_error[ind] * dt);
+
+    // sum control terms for loop
+    V_cntl[ind] = p_cntl[ind] + d_cntl[ind] + i_cntl[ind];
+}
+
+void runPID() {
+    // update timing
+    // Protothreads ms timing should be fine, but may have to set up a separate timer
+    dt = int2Accum(PT_GET_TIME()) - last_time;
+    last_time = int2Accum(PT_GET_TIME());
+
+    //update current values for PID loops
+    current_value[0] = -angY; //pitch
+    current_value[1] = -angZ; //roll
+    current_value[2] = angX; //yaw
+    current_value[3] = height; //height
+    //update desired values for PID loops
+    desired_value[0] = -desired_angY; //pitch
+    desired_value[1] = -desired_angZ; //roll
+    desired_value[2] = desired_angX; //yaw
+    desired_value[3] = desired_height; //height
+
+    //run all PID loops
+    int i;
+    for (i = 0; i < NUM_LOOPS; i++) {
+        PID_loop(i);
+    }
+
+    if (!kill) { // only calculate and update motors if we aren't killed
+
+        // calculate new PWM values
+        int PWM_1 = Accum2int(thrust - V_cntl[3] - V_cntl[0] + V_cntl[1] + V_cntl[2]);
+        int PWM_2 = Accum2int(thrust - V_cntl[3] + V_cntl[0] + V_cntl[1] - V_cntl[2]);
+        int PWM_3 = Accum2int(thrust - V_cntl[3] + V_cntl[0] - V_cntl[1] + V_cntl[2]);
+        int PWM_4 = Accum2int(thrust - V_cntl[3] - V_cntl[0] - V_cntl[1] - V_cntl[2]);
+
+        // correct for values over max or under min
+        PWM_1 = (PWM_1 < pwm_minimum) ? pwm_minimum : (PWM_1 > pwm_maximum) ? pwm_maximum : PWM_1;
+        PWM_2 = (PWM_2 < pwm_minimum) ? pwm_minimum : (PWM_2 > pwm_maximum) ? pwm_maximum : PWM_2;
+        PWM_3 = (PWM_3 < pwm_minimum) ? pwm_minimum : (PWM_3 > pwm_maximum) ? pwm_maximum : PWM_3;
+        PWM_4 = (PWM_4 < pwm_minimum) ? pwm_minimum : (PWM_4 > pwm_maximum) ? pwm_maximum : PWM_4;
+
+        // write new PWM values
+        SetDCOC1PWM(pwm_baseline + PWM_1);
+        SetDCOC2PWM(pwm_baseline + PWM_2);
+        SetDCOC3PWM(pwm_baseline + PWM_3);
+        SetDCOC4PWM(pwm_baseline + PWM_4);
+    }
+}
+
+// === Main thread ===============================================
+
+static PT_THREAD(protothread_serial(struct pt *pt)) {
+    PT_BEGIN(pt);
+
+    static int i;
+
+    // program ESC throttle limits at startup
+    setAllPWM(pwm_maximum); //upper bound
+    PT_YIELD_TIME_msec(5000);
+    setAllPWM(pwm_minimum); //lower bound
+    PT_YIELD_TIME_msec(5000);
+
+    while (1) {
+
+#define UART_FLOATS 4
+#define UART_LENGTH (UART_FLOATS*4+1)
+
+        sprintf(PT_send_buffer, "c");
+        PT_SPAWN(pt, &pt_output, PutSerialBuffer(&pt_output));
+        PT_terminate_char = 0;
+        PT_terminate_count = UART_LENGTH;
+        PT_terminate_time = 0;
+
+        PT_SPAWN(pt, &pt_input, PT_GetMachineBuffer(&pt_input));
+        for (i = 0; i < UART_FLOATS; i++) {
+            u[i].b[0] = PT_term_buffer[(4 * i) + 3];
+            u[i].b[1] = PT_term_buffer[(4 * i) + 2];
+            u[i].b[2] = PT_term_buffer[(4 * i) + 1];
+            u[i].b[3] = PT_term_buffer[(4 * i) + 0];
+        }
+        control_word = PT_term_buffer[4 * UART_FLOATS];
+        switch (control_word) {
+            case sensorControlWord:
+            {
+                angX = float2Accum(u[0].f); //X
+                angY = float2Accum(u[1].f); //Y
+                angZ = float2Accum(u[2].f); //Z
+                if (initialHeight == 0) {
+                    initialHeight = float2Accum(u[3].f); //Height
+                    height = 0;
+                } else {
+                    height = float2Accum(u[3].f) - initialHeight; //Height
+                }
+
+                runPID();
+
+                break;
+            }
+            case killControlWord:
+            {
+                setAllPWM(pwm_minimum);
+                kill = !kill;
+
+                int j;
+                for (j = 0; j < NUM_LOOPS; j++) {
+                    //proportional parameters
+                    Kp[j] = 0;
+                    //derivative parameters
+                    Kd[j] = 0;
+                    //integral parameters
+                    Ki[j] = 0;
+                    //proportional control terms
+                    p_cntl[j] = 0;
+                    //differential control terms
+                    d_cntl[j] = 0;
+                    //integral control terms
+                    i_cntl[j] = 0;
+                    //total of control terms
+                    V_cntl[j] = 0;
+                }
+
+                break;
+            }
+            case nopControlWord:
+            {
+                break;
+            }
+            default:
+            {
+                Kp[control_word] = float2Accum(u[0].f);
+                Ki[control_word] = float2Accum(u[1].f);
+                Kd[control_word] = float2Accum(u[2].f);
+                break;
+            }
+        }
+
+    } // END WHILE(1)
+    PT_END(pt);
+}
+
+// === Main  ======================================================
+
+void main(void) {
+
+    ANSELA = 0;
+    ANSELB = 0;
+
+    // === Config timer and output compares to make pulses ========
+    // set up timer2 to generate the wave period
+    OpenTimer2(T2_ON | T2_SOURCE_INT | T2_PS_1_32, TIMER2_PERIOD);
+    ConfigIntTimer2(T2_INT_OFF | T2_INT_PRIOR_2);
+    mT2ClearIntFlag(); // and clear the interrupt flag
+
+    // === Config OC units for PWM ================================
+    //YELLOW => OC1 => RB15
+    OpenOC1(OC_ON | OC_TIMER2_SRC | OC_PWM_FAULT_PIN_DISABLE, 0, 0);
+    // OC1 is PPS group 1, map to RPB15
+    PPSOutput(1, RPB15, OC1);
+
+    //PURPLE => OC2 => RB11
+    OpenOC2(OC_ON | OC_TIMER2_SRC | OC_PWM_FAULT_PIN_DISABLE, 0, 0);
+    // OC2 is PPS group 2, map to RPB11
+    PPSOutput(2, RPB11, OC2);
+
+    //BLUE =>OC3 => RB9
+    OpenOC3(OC_ON | OC_TIMER2_SRC | OC_PWM_FAULT_PIN_DISABLE, 0, 0);
+    // OC3 is PPS group 4, map to RPB9 (pin 18)
+    PPSOutput(4, RPB9, OC3);
+
+    //GREEN => OC4 => RB13
+    OpenOC4(OC_ON | OC_TIMER2_SRC | OC_PWM_FAULT_PIN_DISABLE, 0, 0);
+    // OC4 is PPS group 3, map to RPB13
+    PPSOutput(3, RPB13, OC4);
+
+    // === config the uart, DMA, vref, timer5 ISR ===========
+    PT_setup();
+
+    // === setup system wide interrupts  ====================
+    INTEnableSystemMultiVectoredInt();
+
+    // init the threads
+    PT_INIT(&pt_serial);
+
+    srand(1); //I don't think we actually need this
+    mPORTASetBits(BIT_0); //I assume we need this?
+
+    while (1) {
+        PT_SCHEDULE(protothread_serial(&pt_serial));
+    }
+} // main
+
+// === end  ======================================================
+
 </pre></div>
-
-              <img class="img-fluid d-block mx-auto" width="650" height="100" src="./img/lab2/acoustic/660,500,750 with axis labels.PNG" alt="">
-              <p>The 660Hz input from the function generator peaked at bin 20, whereas the 500Hz signal peaked at bin 15 and the 750Hz signal peaked at bin 22. This shows that the circuit can decipher between signals that are close together. <br>
-              We also see peaks at bins 1 and 2 for all signals, due to DC values at the input. Since these are consistent for all frequencies, we can ignore these peaks. </p>
-
-              <img class="img-fluid d-block mx-auto" width="650" height="100" src="./img/lab2/acoustic/microphone amplifier schematic.png" alt="">
-              <p> We then added the above amplifier circuit, from Team Alpha, as recommended by the TA’s. <br>
-              The exact resistor values are: 328Ω, 3.24kΩ, 391kΩ, 9.85kΩ, 9.8kΩ </p>
-
-              <img class="img-fluid d-block mx-auto" width="650" height="100" src="./img/lab2/acoustic/with and without amp with axis labels.png" alt="">
-              <p> We then tested the microphone with a 660Hz tone being played, instead of directly inputting a signal from the function generator. We collected the values using the same code as before. As seen in the graph above, without the amplifier the 660Hz tone blends in with the other signals. With the amplifier connected, we can see a peak at bin 20, which is where we saw the 660Hz peak with the function generator. There are also peaks at bin 39 and 58, most likely due to background noise in the lab. This shows that the circuit is successful in amplifying the 660Hz value above noise, and can identify the 660Hz tone based on which bin it appears in (bin 20).
-              </p>
-
-
-
-
+<table style="width:40%">
+              <tr>
+                <th>Component Part</th>
+                <th>Value</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>R1</td>
+                <td>1.34 kΩ</td>
+              </tr>
+              <tr>
+                <td>R2</td>
+                <td>6.79 kΩ</td>
+              </tr>
+              <tr>
+                <td>R3</td>
+                <td>6.73 kΩ</td>
+              </tr>
+              <tr>
+                <td>R4</td>
+                <td>39.93 kΩ</td>
+              </tr>
+              <tr>
+                <td>C1</td>
+                <td>3.3 nF</td>
+              </tr>
+            </table>
+              <br>
         
     <!-- Footer -->
     <footer>
