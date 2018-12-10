@@ -56,7 +56,7 @@
               <p> The basic setup is a standard right- hand rule axis, with x lying parallel to the length of the vehicle and positive in a forward direction, y lying parallel to the width and positive to the right(assuming a top down, front first image), and the z axis facing directly down towards the earth. Pitch, Roll, and Yaw therefore correspond to right-hand curls along the y, x, and z axes respectively. This setup allows us to create parallels for the x- quadcopter to the single DOF motor from lab 4.
               </p> 
               <img class="img-fluid d-block mx-auto" width="285" height="400" src="./img/pitchrollyaw.jpg" alt="pitchrollyaw">
-              <img class="img-fluid d-block mx-auto" width="600" height="400" src="./img/topviewdrone.jpg" alt="drone top view">
+              <img class="img-fluid d-block mx-auto" width="800" height="400" src="./img/topviewdrone.jpg" alt="drone top view">
               <h6> Figure BM1: To the left can be seen an example of the euler angle scheme for a plane. To the right can be seen a top down view of our quadcopter with the arms labeled as mentioned</h6>
               <p> We will assume a top down view of the quadcopter, with the front end above the bottom. We will then number the arms clockwise starting from the top right as motor 1,2,3,4. These worked as follows: 
               </p> <br>
@@ -72,7 +72,7 @@
               <p> Next, we had to select an initial reference frame for the drone. The drawing presented above is technically only the ‘body’ frame, and an initial reference frame is required in order to determine rotation. To simplify things, we decided on the following, upon startup the measurement device would be kept parallel to the earth and 0 pitch, 0 roll, and 180 yaw would be set as the initial angles. For the entirety of the lab, the desired angle was set as the initial reference frame angles. This was because the initial goal of the lab was for the drone to hover while maintaining angular stability. Theoretically however lateral movement could be accomplished by setting desired angles off 0. For instance moving forward could be accomplished by setting the desired pitch slightly negative so that the vertical thrust would hove a component moving forward. Meanwhile a PID loop on the height would keep the drone from falling.
               </p>
               <h3> Logical Structure </h3>
-              <img class="img-fluid d-block mx-auto" width="500" height="700" src="./img/logicalstructure.jpg" alt="logicalstructure">
+              <img class="img-fluid d-block mx-auto" width="600" height="700" src="./img/logicalstructure.jpg" alt="logicalstructure">
               <h4> Remote Transmitter Smartphone </h4>
               <p> This is the controller phone that will be in the hands of the user. It simply consists of the App that will be used to communicate with the drone, through bluetooth (other possible media Wi-Fi, Cellular etc).
               </p>
@@ -140,22 +140,22 @@
               <h4> Blade Guards </h4>
               <p> Upon preliminary testing of the motor along with recommendation from Professor Land, it was determined that propellers of this size are dangerous when in motion. To mitigate this danger, propeller guards were originally designed in AutoCAD Inventor to be used on the drone. The first version proved to be too big to be made on any of the 3D printers available to us. The second scaled down version only covered the extruding 75 degree angles at the end of any of the arms. This fit in a 3D printer, but unfortunately it proved to be too complex a design to print directly.
               </p>
-              <img class="img-fluid d-block mx-auto" width="375" height="350" src="./img/cadguard1.jpg" alt="CAD Guard">
-              <img class="img-fluid d-block mx-auto" width="375" height="350" src="./img/cadguard2.jpg" alt="CAD Guard">
+              <img class="img-fluid d-block mx-auto" width="275" height="250" src="./img/cadguard1.jpg" alt="CAD Guard">
+              <img class="img-fluid d-block mx-auto" width="275" height="250" src="./img/cadguard2.jpg" alt="CAD Guard">
               <h6> Figure BG1: Designs in AutoCAD inventor for a propeller guard to be placed on our drone. Unfortunately we had to buy guards. </h6>
               <p> An immediate fix seemed to be modularity. A guard would be printed out in much simpler pieces and then assembled later. Unfortunately we needed the guards immediately to further test the motors. To save time, we purchased propeller guards that would fit on a drone of similar dimensions to ours. Professor Land agreed that we could exclude them from the budget because he wanted us to be safe.
               </p>
               <h3> Bluetooth Sender and Receiver Apps</h3>
               <p> As has been made abundantly clear by now, a critical portion of this project is communication between the phone to the PIC32 via UART. To handle things from the phone’s end, an app was written in android studio in Java so that the necessary information could be sent. As time went on it became evident that PID tuning is best done from UART as well, since during testing it would be hard to program the PIC32 while surrounded by rapidly spinning propellers. To accomplish this, a second app was written to communicate PID parameters and a wireless KILL command to the original app. The app on the phone that received data via bluetooth and transmitted it with sensor data to the PIC32 was referred to as the receiver and the app on the phone that sent these parameters was the sender.
               </p>
-              <img class="img-fluid d-block mx-auto" width="275" height="375" src="./img/recieverphone.jpg" alt="Phone App">
-              <img class="img-fluid d-block mx-auto" width="275" height="375" src="./img/remotephone.jpg" alt="Phone App">
+              <img class="img-fluid d-block mx-auto" width="100" height="175" src="./img/recieverphone.jpg" alt="Phone App">
+              <img class="img-fluid d-block mx-auto" width="100" height="175" src="./img/remotephone.jpg" alt="Phone App">
               <h6> Figure: Sender App on the left and Receiver App on the right </h6>
               <h4> Testing </h4>
               <p> It was made apparent once the drone was assembled that safely testing and tuning the drone would be a challenge. The earlies design was a wooden structure of a previous year’s design that had free rotation along 1 degree of freedom on a crossbar. This could theoretically allow for testing of pitch and roll, but it proved to be too stiff and unresponsive. The next design involved a section of PVC piping held vertical with a large vice and topped of with a PVC tee. This was to again allow for individual testing of pitch and roll, but it also did not work since the large responses of the initial PID testing made the drone sway violently from side to side. This led to the third and working attempt. It consisted of two long section of two by four supported by two equal height tables. A metal pipe with a pvc pipe inserted partially over was then placed so that the boards would act as support, and was then securely fastened to the boards. The drone was then secured firmly to the pvc with zipties so as to ensure no friction. The design had the added benefit that the planks would restrict vertical motion of the drone. 
               </p>              
               <img class="img-fluid d-block mx-auto" width="200" height="375" src="./img/pitchrolltesting.jpg" alt="Rig 1">
-              <img class="img-fluid d-block mx-auto" width="200" height="375" src="./img/yawtesting.jpge.jpg" alt="Rig 2">
+              <img class="img-fluid d-block mx-auto" width="200" height="375" src="./img/yawtesting.jpg" alt="Rig 2">
               <img class="img-fluid d-block mx-auto" width="200" height="375" src="./img/heightesting.jpg" alt="Rig 3">
               <h6> Figure: Three Testing Rigs, first for Roll and Pitch, second for Yaw, third for Height </h6>
               <p> The next challenge was to restrict motion to yaw. This involved searching the lab for discarded projects, where we found a metal ring secured to a brushless motor, again secured to a wooden slab. This had excellent free rotation and worked instantly. The final rig would be to test height adjustments/flight. This would be once we had already achieved reasonable stability in the other three angles. We came up with a cardboard box with a rope running from the drone through the top of the box out a side and held by a team member. There was a vertical bar running through the center which made the rope from the top hole only pull with a vertical component. While this setup did work, it did limit the motion of the overall drone, and did not simulate a true flight. As mentioned before, an extra precaution was taken in the form of the hard-kill switch placed between the battery and the esc’s. This would forcibly kill power at the discretion of the user.
