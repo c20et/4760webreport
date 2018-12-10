@@ -189,30 +189,94 @@
               <br>
               <h2> Conclusion </h2>
               <h3> Overview </h3>
+              <p> Given the time constraints of the project, the final result was satisfactory. We were able to successfully achieve self-stabilization in pitch, roll, and yaw. Be believe that we produced to tools necessary that, given the proper testing environment and more time, we could have achieved hover as well. The drone was able to move up given sufficient thrust, but would move up at an angle. When we tried to obtain the control values for height, the drone nearly hit one of our members. We agreed that further testing would be unsafe, and pivoted to a 3-degree of freedom self-stabilizing drone frame. This drone did effectively stabilize in 3 rotational axes and would correct for small external disturbances.
+              </p>
               <h3> Improvements </h3>
+              <p> We do not recommend that others do this project. Given the time constraints and budget of this project it is difficult to do; given the speed of the blades necessary for uplift and the lack of natural drone testing environments at Cornell, attempting this project can also be very dangerous. That said, there are several things we would do differently if we redid this project. Either the current asymmetric frame would be readjusted to become more symmetric or a different symmetric frame would be used so that the center of mass corresponded to the center of the drone. The phone would be attached with a hard case connected to the frame of the quadcopter instead of velcro, so as to minimize the possibility of the phone shifting without the drone. Instead of attempting to use the barometer sensor on the phone, which has limited accuracy, we would use an ultrasonic distance sensor. We would have several spare motors and ESCs so progress would not be impeded even if a part burned out. Due to the delay in Bluetooth signaling, we may consider an alternative source of remote transmission. Lastly, we would not attempt to make the drone hover in the open and only fly in a safe training environment. The right environment to obtain the control values for height would be a large raised net cage. The netting would both prevent the drone from hurting anyone while also protecting the drone from collisions that could damage it. 
+              </p>
               <h3> Intellectual Property Considerations </h3>
+              <p> The Java app code was written with the help of many open source public domain references, including Android Studio’s Developers Guide, DIY blogs and useful posts on StackOverflow. The C code was largely based off and inspired by the C code written for ECE 4760’s Lab 4: One DOF helicopter. We are not reverse-engineering any design. We did not have to sign a non-disclosure email to get a sample part. From our current understanding, it is not possible to patent the project within the United States due to overlapping claims. Some of our group members are interested in investigating publishing opportunities for the project, but as of now it remains uncertain.
+              </p>
               <h3> Ethical Considerations </h3>
+              <p> The IEEE Code of Ethics was adhered to during the project. Safety was always a priority in this project. The reason why we pivoted was because it was not possible to safely obtain the PID control values for height. The drone would ascend at in angle and given the necessary speed of the propellers required for flying, there was serious danger that it could collide and hurt someone. In addition to the digital kill switch we also had a physical kill switch because we did not want to take the risk of the delay in bluetooth signalling. Any reference that was consulted, even if it did was not ultimately used, is cited in the Appendix.
+              </p>
               <h3> Legal Considerations </h3>
+              <p> There are no relevant legal considerations with regards to FCC Part 15 rules, the FDA or the Federal Motor Vehicle Standards.
+              </p>
               <br>
               <br>
               <h2> APPENDIX </h2>
               <h3> APPENDIX A: Inclusion of Project </h3>
+              <p> The group approves this report for inclusion on the course website.
+              </p>
+              <p> The group does not approve the video for inclusion on the course youtube channel.
+              </p>
               <h3> APPENDIX B: Circuit Schematics </h3>
+              <img class="img-fluid d-block mx-auto" width="400" height="400" src="./img/circuitschematic.jpg" alt="Circuit Schematic">
               <h3> APPENDIX C: Budget </h3>
+              <table style="width:40%">
+              <tr>
+                <th>Part</th>
+                <th>Price</th>
+                <th>Source</th>
+              </tr>
+              <tr>
+                <td>Quadcopter Frame</td>
+                <td>$11.27</td>
+                <td>https://www.amazon.in/gp/product/B018VS1VP0/ref=oh_aui_detailpage_o08_s00?ie=UTF8&psc=1</td>
+              </tr>
+              <tr>
+                <td> Brushless Motor ESC Propeller Set x 4 </td>
+                <td>$50.60</td>
+                <td>https://www.amazon.in/gp/product/B01BJWLI6C/ref=oh_aui_detailpage_o04_s00?ie=UTF8&psc=1</td>
+              </tr>
+              <tr>
+                <td> 3S LiPo battery </td>
+                <td> $20.99 </td>
+                <td>https://www.amazon.com/Battery-Helicopter-Quadcopter-Multirotor-EFLB22003S30/dp/B013TK47VK/ref=sr_1_fkmr0_1?s=toys-and-games&ie=UTF8&qid=1538101124&sr=1-1-fkmr0&keywords=Orange+2200mAh+3S+30C%2F60C+Lithium+polymer+battery+Pack+%28LiPo%29</td>
+              </tr>
+              <tr>
+                <td> PIC32MX250F128B </td>
+                <td>$5.00 </td>
+                <td>http://people.ece.cornell.edu/land/courses/ece4760/labs/f2018/lab5.html</td>
+              </tr>
+              <tr>
+                <td> MicroStickII </td>
+                <td> $1.00 </td>
+                <td>http://people.ece.cornell.edu/land/courses/ece4760/labs/f2018/lab5.html</td>
+              </tr>
+              <tr>
+                <td> Small Board </td>
+                <td> $4.00 </td>
+                <td>http://people.ece.cornell.edu/land/courses/ece4760/labs/f2018/lab5.html</td>
+              </tr>
+              <tr>
+                <td> 2 inch solder board </td>
+                <td> $1.00 </td>
+                <td>http://people.ece.cornell.edu/land/courses/ece4760/labs/f2018/lab5.html</td>
+              </tr>
+              <tr>
+                <td> Header plug x  15 </td>
+                <td>$0.75 </td>
+                <td>http://people.ece.cornell.edu/land/courses/ece4760/labs/f2018/lab5.html</td>
+              </tr>
+              <tr>
+                <td> Jumper cables x 3 </td>
+                <td> $0.30 </td>
+                <td>http://people.ece.cornell.edu/land/courses/ece4760/labs/f2018/lab5.html</td>
+              </tr>
+              <tr>
+                <td> </td>
+                <td> Total: $118.90 </td>
+                <td> </td>
+              </tr>
+            </table>
+              <br>
               <h3> APPENDIX D: Work Distribution </h3>
+              <p>
+              </p>
               <h3> APPENDIX E: References </h3>
               <h3>APPENDIX F: Commented Code </h3>
-              
-              <h3> Acoustic Team </h3>
-              <p> Priya and Vini worked on the acoustic functionalities. <br>
-              Assembling the microphone circuit. </p>
-              Materials Used:<br>
-              &emsp; - 1 Arduino Uno <br>
-              &emsp; - Electret microphone <br>
-              &emsp; - 1 µF capacitor, 6.8µF capacitor <br>
-              &emsp; - various resistors <br>
-              &emsp; - LM358 Op Amp <br>
-              &emsp; - Various wires <br>
 
 
               <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">void setup() {
